@@ -1,0 +1,46 @@
+# PostureAI global configuration. All paths are relative to project root; override via CLI/env in later phases.
+
+project:
+  name: posture-ai
+  seed: 42
+  device: auto   # auto | cpu | cuda
+
+paths:
+  raw_data_dir: data/raw
+  processed_data_dir: data/processed
+  checkpoints_dir: checkpoints
+  reports_dir: reports
+
+video:
+  target_fps: 15          # downsample for consistent temporal modeling
+  max_frames_in_memory: 64 # process in rolling windows, never load full video
+
+pose_estimation:
+  backend: mediapipe       # mediapipe | yolo_pose
+  min_detection_confidence: 0.5
+  min_tracking_confidence: 0.5
+  landmark_confidence_threshold: 0.5   # below this, landmark is treated as missing
+  smoothing_window: 5                   # frames, moving-average temporal smoothing
+
+posture_thresholds:
+  # NOTE: these are heuristic starting points, not clinically validated universal cutoffs.
+  # They are configurable because "normal" posture varies by body type, camera angle and
+  # context (see docs/technical_report.md, "Limitations of fixed angle thresholds").
+  forward_head_angle_deg: 50
+  shoulder_asymmetry_deg: 5
+  trunk_inclination_deg: 10
+  knee_angle_deep_bend_deg: 90
+
+sequence_model:
+  window_size: 30          # frames per sequence sample
+  stride: 15
+  hidden_size: 64
+  num_layers: 2
+  dropout: 0.3
+
+training:
+  batch_size: 16
+  epochs: 50
+  learning_rate: 0.001
+  val_split: 0.2
+  test_split: 0.1
