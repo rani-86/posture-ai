@@ -78,11 +78,42 @@ FastAPI backend wraps inference; Streamlit dashboard wraps FastAPI + visualizati
 
 ```bash
 py -3.11 -m venv .venv
-.venv/Scripts/python.exe -m pip install -r requirements.txt
-.venv/Scripts/python.exe -I -c "import cv2, mediapipe as mp; mp.solutions.pose.Pose(static_image_mode=True); print('ok')"
+.venv/Scripts/python.exe -m pip install --only-binary=:all: -r requirements.txt
+.venv/Scripts/python.exe -c "import torch, mediapipe, xgboost, fastapi, streamlit, numpy, pandas, cv2, sklearn, matplotlib; mediapipe.solutions.pose.Pose(static_image_mode=True)"
 ```
-Confirmed: opencv 4.10.0, mediapipe 0.10.14 with working `solutions.pose.Pose`, numpy
-1.26.4 / pandas 2.2.2 (compatible with torch 2.3.1).
+
+Two pin issues surfaced and were fixed during setup:
+- `matplotlib==3.9.1` has no Windows cp311 wheel (only `3.9.1.post1`/`3.9.2`) — pinned to
+  `3.9.2` in `requirements.txt`.
+- An initial unpinned `pip install mediapipe` resolved to `mediapipe 1.2.2`, which dropped
+  the legacy `solutions.*` API in favor of a Tasks API — reinstalled strictly from the
+  pinned `requirements.txt` (`mediapipe==0.10.14`) to get the API this project targets.
+- `--only-binary=:all:` was used throughout to avoid source builds silently falling back
+  to a broken local mingw/x86 toolchain on this machine.
+
+Final confirmed, importable versions in `posture-ai/.venv`:
+
+| Package | Version |
+|---|---|
+| torch | 2.3.1+cpu (CPU-only build; no CUDA-enabled wheel installed yet — see note below) |
+| torchvision | 0.18.1+cpu |
+| mediapipe | 0.10.14 (`solutions.pose.Pose` verified working) |
+| xgboost | 2.1.0 |
+| numpy | 1.26.4 |
+| pandas | 2.2.2 |
+| opencv-python | 4.10.0.84 (reports underlying OpenCV core `4.11.0` via `cv2.__version__`) |
+| matplotlib | 3.9.2 |
+| scikit-learn | 1.5.1 |
+| fastapi | 0.112.0 |
+| streamlit | 1.37.1 |
+
+**GPU note:** `pip install torch==2.3.1` from the default PyPI index installs the CPU-only
+build; `torch.cuda.is_available()` is currently `False` despite the RTX 2050 being present.
+Getting CUDA-enabled torch requires installing from PyTorch's CUDA-specific index
+(`--index-url https://download.pytorch.org/whl/cu121` or similar) instead of plain PyPI.
+Deferred to Phase 4/5 (model training) since XGBoost and a small LSTM/GRU on short pose
+sequences train acceptably on CPU; GPU install will be revisited only if training time
+becomes a real bottleneck.
 
 ## Open items before Phase 2
 - Need to actually download UI-PRMD and KIMORE (both require a short registration/request
