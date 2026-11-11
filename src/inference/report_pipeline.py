@@ -52,11 +52,30 @@ class ActivityPrediction:
 
 
 @dataclass
+class FrameRecord:
+    """Per-frame data for timeline/joint-angle charts - the Streamlit dashboard (Phase 8)
+    is the first consumer; the FastAPI report (Phase 7) intentionally stays aggregate-only
+    to keep that response small, so this lives on the report object rather than the API
+    schema."""
+
+    frame_index: int
+    timestamp_sec: float
+    pose_detected: bool
+    trunk_inclination_deg: float | None
+    left_knee_deg: float | None
+    right_knee_deg: float | None
+    forward_head_angle_deg: float | None
+    shoulder_tilt_deg: float | None
+    any_deviation: bool | None
+
+
+@dataclass
 class VideoAnalysisReport:
     video_path: str
     annotated_video_path: str | None
     posture_summary: PostureSummary
     activity_prediction: ActivityPrediction | None
+    frame_records: list[FrameRecord] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
 
@@ -80,6 +99,7 @@ def analyze_video(
     trunk_flags: list[bool] = []
     trunk_angles: list[float] = []
     channel_sequence: list[np.ndarray] = []
+    frame_records: list[FrameRecord] = []
 
     for normalized_pose, raw_pose in run_pose_pipeline(video_path, config, annotated_output_path):
         total_count += 1
@@ -96,6 +116,20 @@ def analyze_video(
             trunk_flags.append(deviation.trunk_inclination_deviation)
         if features.trunk_inclination_deg is not None:
             trunk_angles.append(features.trunk_inclination_deg)
+
+        frame_records.append(
+            FrameRecord(
+                frame_index=normalized_pose.frame_index,
+                timestamp_sec=normalized_pose.timestamp_sec,
+                pose_detected=raw_pose.detected,
+                trunk_inclination_deg=features.trunk_inclination_deg,
+                left_knee_deg=features.left_knee_deg,
+                right_knee_deg=features.right_knee_deg,
+                forward_head_angle_deg=features.forward_head_angle_deg,
+                shoulder_tilt_deg=features.shoulder_tilt_deg,
+                any_deviation=deviation.any_deviation,
+            )
+        )
 
         channel_sequence.append(pose_frame_to_channels(normalized_pose))
 
@@ -137,5 +171,6 @@ def analyze_video(
         annotated_video_path=str(annotated_output_path) if annotated_output_path else None,
         posture_summary=posture_summary,
         activity_prediction=activity_prediction,
+        frame_records=frame_records,
         warnings=warnings,
     )
