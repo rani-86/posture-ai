@@ -1,27 +1,34 @@
-"""Trains an XGBoost multi-class classifier on per-episode summary-statistic features."""
+"""Trains an XGBoost multi-class classifier on per-sample summary-statistic features.
+
+Shared by Phase 4 (UI-PRMD movement classification) and Phase 5 (activity recognition)
+via the `label_fn` passed into `build_feature_matrix`.
+"""
 from __future__ import annotations
+
+from typing import Callable
 
 import numpy as np
 import xgboost as xgb
 
-from src.data.uiprmd_dataset import Episode
+from src.data.sequence_dataset import uiprmd_label_fn
 from src.feature_extraction.sequence_features import summary_statistics_features
 
 
-def build_feature_matrix(episodes: list[Episode]) -> tuple[np.ndarray, np.ndarray]:
-    x = np.stack([summary_statistics_features(e) for e in episodes])
-    y = np.array([e.movement_id - 1 for e in episodes])  # 0-indexed
+def build_feature_matrix(samples: list, label_fn: Callable = uiprmd_label_fn) -> tuple[np.ndarray, np.ndarray]:
+    x = np.stack([summary_statistics_features(s) for s in samples])
+    y = np.array([label_fn(s) for s in samples])
     return x, y
 
 
 def train_xgboost(
-    train_episodes: list[Episode],
-    val_episodes: list[Episode],
+    train_episodes: list,
+    val_episodes: list,
     num_classes: int,
     seed: int,
+    label_fn: Callable = uiprmd_label_fn,
 ) -> xgb.XGBClassifier:
-    x_train, y_train = build_feature_matrix(train_episodes)
-    x_val, y_val = build_feature_matrix(val_episodes)
+    x_train, y_train = build_feature_matrix(train_episodes, label_fn)
+    x_val, y_val = build_feature_matrix(val_episodes, label_fn)
 
     model = xgb.XGBClassifier(
         objective="multi:softmax",

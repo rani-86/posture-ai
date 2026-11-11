@@ -1,12 +1,15 @@
-"""Training loop shared by the LSTM and GRU sequence classifiers."""
+"""Training loop shared by the LSTM and GRU sequence classifiers (and shared across
+Phase 4's UI-PRMD movement classification and Phase 5's activity recognition, via the
+`label_fn` passed through to `PoseSequenceDataset`)."""
 from __future__ import annotations
+
+from typing import Callable
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from src.data.sequence_dataset import PoseSequenceDataset
-from src.data.uiprmd_dataset import Episode
+from src.data.sequence_dataset import PoseSequenceDataset, uiprmd_label_fn
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -14,17 +17,18 @@ logger = get_logger(__name__)
 
 def train_sequence_model(
     model: torch.nn.Module,
-    train_episodes: list[Episode],
-    val_episodes: list[Episode],
+    train_episodes: list,
+    val_episodes: list,
     target_length: int,
     batch_size: int,
     epochs: int,
     learning_rate: float,
     device: str,
     patience: int = 10,
+    label_fn: Callable = uiprmd_label_fn,
 ) -> dict:
-    train_ds = PoseSequenceDataset(train_episodes, target_length)
-    val_ds = PoseSequenceDataset(val_episodes, target_length, normalize_stats=train_ds.normalize_stats)
+    train_ds = PoseSequenceDataset(train_episodes, target_length, label_fn=label_fn)
+    val_ds = PoseSequenceDataset(val_episodes, target_length, normalize_stats=train_ds.normalize_stats, label_fn=label_fn)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
@@ -86,9 +90,14 @@ def train_sequence_model(
 
 
 def predict_sequence_model(
-    model: torch.nn.Module, episodes: list[Episode], target_length: int, normalize_stats: tuple, device: str
+    model: torch.nn.Module,
+    episodes: list,
+    target_length: int,
+    normalize_stats: tuple,
+    device: str,
+    label_fn: Callable = uiprmd_label_fn,
 ) -> tuple[np.ndarray, np.ndarray]:
-    ds = PoseSequenceDataset(episodes, target_length, normalize_stats=normalize_stats)
+    ds = PoseSequenceDataset(episodes, target_length, normalize_stats=normalize_stats, label_fn=label_fn)
     loader = DataLoader(ds, batch_size=64, shuffle=False)
 
     model.eval()
