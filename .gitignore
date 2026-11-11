@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 data/raw/
 data/processed/
+*.zip
 checkpoints/*.pt
 checkpoints/*.pth
 checkpoints/*.pkl
