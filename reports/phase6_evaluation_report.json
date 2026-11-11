@@ -1,0 +1,36 @@
+{
+  "uiprmd_movement_classification": {
+    "xgboost": {
+      "accuracy": 0.93,
+      "macro_f1": 0.9275057470405956
+    },
+    "lstm": {
+      "accuracy": 0.94,
+      "macro_f1": 0.9369488995138091
+    },
+    "gru": {
+      "accuracy": 0.9,
+      "macro_f1": 0.8971332732308342
+    }
+  },
+  "synthetic_activity_recognition": {
+    "xgboost": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0
+    },
+    "lstm": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0
+    },
+    "gru": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0
+    }
+  },
+  "video_pipeline_benchmark": {
+    "num_frames": 150,
+    "wall_clock_sec": 5.366351099997701,
+    "fps": 27.95195416864623,
+    "peak_memory_mb": 28.226704597473145
+  }
+}

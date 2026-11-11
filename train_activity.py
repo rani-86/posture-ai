@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 
+import numpy as np
 import torch
 
 from src.data.activity_dataset import (
@@ -82,6 +83,7 @@ def main() -> None:
         logger.info(f"{name.upper()} test: {report.summary()}")
         results[name] = report
         torch.save(model.state_dict(), config.checkpoints_dir / f"{name}_activity_classifier.pt")
+        np.savez(config.checkpoints_dir / f"{name}_activity_classifier_normalize_stats.npz", *fit["normalize_stats"])
 
     config.reports_dir.mkdir(parents=True, exist_ok=True)
     report_path = config.reports_dir / "phase5_activity_model_comparison.json"

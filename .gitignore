@@ -8,6 +8,7 @@ checkpoints/*.pt
 checkpoints/*.pth
 checkpoints/*.pkl
 checkpoints/*.json
+checkpoints/*.npz
 reports/*.mp4
 reports/*.png
 .pytest_cache/

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import torch
 
 from src.data.uiprmd_dataset import NUM_MOVEMENT_CLASSES, load_all_episodes, subject_wise_split
@@ -73,6 +74,7 @@ def main() -> None:
     logger.info(f"LSTM test: {lstm_report.summary()}")
     results["lstm"] = lstm_report
     torch.save(lstm.state_dict(), config.checkpoints_dir / "lstm_movement_classifier.pt")
+    np.savez(config.checkpoints_dir / "lstm_movement_classifier_normalize_stats.npz", *lstm_fit["normalize_stats"])
 
     # --- GRU ---
     logger.info("Training GRU...")
@@ -92,6 +94,7 @@ def main() -> None:
     logger.info(f"GRU test: {gru_report.summary()}")
     results["gru"] = gru_report
     torch.save(gru.state_dict(), config.checkpoints_dir / "gru_movement_classifier.pt")
+    np.savez(config.checkpoints_dir / "gru_movement_classifier_normalize_stats.npz", *gru_fit["normalize_stats"])
 
     # --- Save comparison report ---
     config.reports_dir.mkdir(parents=True, exist_ok=True)
